@@ -1,0 +1,48 @@
+Hyp_901_1333.txt
+Iteration 0, Score: 1274, End time: 0
+Iteration 5, Score: 1289, End time: 4.869678497314453
+Iteration 10, Score: 1292, End time: 9.712581157684326
+Iteration 15, Score: 1295, End time: 14.233972072601318
+Iteration 20, Score: 1296, End time: 18.719496250152588
+Iteration 25, Score: 1298, End time: 23.214563846588135
+Iteration 30, Score: 1298, End time: 27.747471809387207
+Hyp_1779_2660.txt
+Iteration 0, Score: 2562, End time: 0
+Iteration 5, Score: 2575, End time: 18.609435081481934
+Iteration 10, Score: 2580, End time: 36.18706297874451
+Iteration 15, Score: 2580, End time: 53.60871934890747
+Iteration 20, Score: 2583, End time: 70.91870641708374
+Iteration 25, Score: 2583, End time: 88.18538570404053
+Iteration 30, Score: 2583, End time: 105.46175169944763
+Hyp_2664_3901.txt
+Iteration 0, Score: 3742, End time: 0
+Iteration 5, Score: 3770, End time: 41.7566556930542
+Iteration 10, Score: 3774, End time: 81.6320412158966
+Iteration 15, Score: 3779, End time: 120.59461236000061
+Iteration 20, Score: 3785, End time: 161.18870401382446
+Iteration 25, Score: 3785, End time: 199.88347721099854
+Iteration 30, Score: 3787, End time: 238.40072178840637
+Hyp_4425_6555.txt
+Iteration 0, Score: 6310, End time: 0
+Iteration 5, Score: 6346, End time: 115.51275825500488
+Iteration 10, Score: 6362, End time: 224.881578207016
+Iteration 15, Score: 6370, End time: 334.6198513507843
+Iteration 20, Score: 6371, End time: 442.4089517593384
+Iteration 25, Score: 6371, End time: 553.3924114704132
+Iteration 30, Score: 6374, End time: 663.916387796402
+Hyp_6281_9325.txt
+Iteration 0, Score: 9003, End time: 0
+Iteration 5, Score: 9065, End time: 242.4032804965973
+Iteration 10, Score: 9079, End time: 473.60772466659546
+Iteration 15, Score: 9087, End time: 700.9000782966614
+Iteration 20, Score: 9088, End time: 928.2654407024384
+Iteration 25, Score: 9091, End time: 1154.2345287799835
+Iteration 30, Score: 9092, End time: 1380.3697431087494
+Hyp_8901_13058.txt
+Iteration 0, Score: 12584, End time: 0
+Iteration 5, Score: 12672, End time: 491.9042785167694
+Iteration 10, Score: 12693, End time: 958.1941187381744
+Iteration 15, Score: 12703, End time: 1420.8096268177032
+Iteration 20, Score: 12717, End time: 1881.289008140564
+Iteration 25, Score: 12724, End time: 2340.7752742767334
+Iteration 30, Score: 12725, End time: 2798.493053674698

@@ -1,0 +1,46 @@
+{
+    "data": "hypergraph",
+    "mode": "mincut",
+    "K": 1,
+    "random_init": "none",
+
+    "transfer": false,
+    "initial_transfer": false,
+
+    "GD": false,
+    "Att": false,
+    "dropout": 0,
+    "f_input": false,
+    "f": 70,
+    "penalty_inc": false,
+    "penalty_c": 1e-5,
+    "n_partitions": 4,
+
+    "coarsen": false,
+    "sparsify": false,
+    "sparsify_p": 0.8,
+
+    "lr": 1e-2,
+    "epoch": 1e2,
+    "tol": 1e-4,
+    "mapping": "distribution",
+    "boosting_mapping": 1,
+    "logging_path": "./log/transfer/Hypermincut_vanilla.log",
+    "res_path": "./res/Hypermincut_vanilla.hdf5",
+    "folder_path": "./data/hypergraph_data/synthetic/new/all/",
+    "folder_path_hyper": "./data/hypergraph_data/synthetic/new/all//",
+    "plot_path": "./res/plots/",
+    "model_save_path": "./models/transfer/",
+    "model_load_path": "./models/hypermaxcut/",
+    "N_realize": 1,
+    "Niter_h": 9,
+    "t": 0.01,
+    "hyper": true,
+    "penalty": 0,
+    "patience": 50,
+    "load_best_out" : false,
+
+    "multi_gpu": 0,
+    "num_gpus": 1,
+    "test_multi_gpu": 0
+}
