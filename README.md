@@ -49,7 +49,7 @@ Our experiments comprise three components. The configuration files for these exp
     - Hypergraph MaxCut task
       - HypOp: `configs/Hypermaxcut_hypop.json`
       - Bipartite: `configs/Hypermaxcut_bipartite.json`
-      - Simulated Annealing (SA), `configs/Hypermaxcut_sa.json`
+      - Simulated Annealing (SA): `configs/Hypermaxcut_sa.json`
       - ADAM: `configs/Hypermaxcut_adam.json`
       
     - Graph Maximum independent set (MIS) task
