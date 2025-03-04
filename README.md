@@ -44,7 +44,7 @@ python -m torch.distributed.launch run_dist.py
 ---
 ## Reusability Experiments
 Our experiments comprise three components. The configuration files for these experiments are detailed below:
-### Part1: Reproduction the reported results
+### Part1: Reproduction of the reported results
 - **Experiments on CPU**: ( In `run.py`, set the path of config files to accommodate different experiments.)
     - Hypergraph MaxCut task
       - HypOp: `configs/Hypermaxcut_hypop.json`
@@ -65,7 +65,7 @@ Our experiments comprise three components. The configuration files for these exp
         - Step1: Parallel training, set `test_mode` in `run_dist.py` to `multi_gpu`, set config file to `configs/dist_configs/maxcut_stanford_for_paral`
         - Step2: Fine-tuning infer, set `test_mode` in `run_dist.py` to `infer`, set config file to `configs/dist_configs/maxcut_stanford_for_paral`
   
-### Part2: Robustness evaluation
+### Part2: Robustness evaluation of HypOp
 This section primarily evaluates the robustness of HypOp across various distributed training configurations.
 - **Alternate the number of GPUs**
     - Hypergraph MaxCut task using HypOp: Set GPU number `'num_gpus'` in `'configs/dist_configs/maxcut_stanford_for_dist.json'` to `1,2,4,8`.
