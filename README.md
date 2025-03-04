@@ -33,7 +33,7 @@ python -m torch.distributed.launch run_dist.py
 
 ##### Step2: Postprocessing
 
-in configs, set "load best out" to true, set "epoch" to 0
+In configs, set "load best out" to true, set "epoch" to 0
 
 In `run_dist.py`, set `test_mode` variable to `infer`
 
