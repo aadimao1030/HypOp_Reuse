@@ -198,7 +198,6 @@ for k in range(params['K']):
             # train steps
             start_time = time.time()
             for i in range(rounds):
-                # 向前传播
                 inputs = embed.weight
                 temp = conv1(inputs)
                 temp = G @ temp
