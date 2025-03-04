@@ -28,7 +28,7 @@ conda install nccl
 In `run_dist.py`, set `test_mode` variable to `dist`.
 
 ```python
-python -m torch.distributed.launch run_dist.py.
+python -m torch.distributed.launch run_dist.py
 ```
 
 ##### Step2: Postprocessing
