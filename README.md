@@ -5,7 +5,7 @@ Our experiment were conducted on an Intel Xeon 8358P CPU with a single NVIDIA RT
 
 ---
 ## System Requirements
-The source code developed in python 3.9 using Pytorch 2.3.1. The required python dependencies are given in `dependency.txt`, which was tested on CentOS-7 with CUDA Version 11.8.
+The source code developed in python 3.9 using Pytorch 2.3.1. The required python dependencies are given in `dependency.txt` file and have been tested on CentOS-7 with CUDA version 11.8.
 ```bash
 conda create --name environment_name python=3.9
 conda activate environment_name
