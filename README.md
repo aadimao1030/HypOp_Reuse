@@ -75,7 +75,7 @@ This section primarily evaluates the robustness of HypOp across various distribu
     - Hypergraph MaxCut task using HypOp: set `'fine_tuning'` in `'configs/dist_configs/maxcut_stanford_for_dist.json'` to `'PSO', 'ACO', 'GA'`.
 
 ### Part3: Generalizability evaluation
-This part mainly uses HypOp to solve other combinatorial optimization problems:
+This part mainly uses HypOp to solve other combinatorial optimization problems.
 - **Apply HypOp on Maximum Clique Problem**
 
     ```bash
