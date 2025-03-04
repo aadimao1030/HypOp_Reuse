@@ -109,7 +109,7 @@ This part mainly uses HypOp to solve other combinatorial optimization problems.
     - Niter_h: only used when mapping = distribution: number of simulated annealing iterations
     - t: simulated annealing initial temperature
     - random_init: initializing simulated annealing randomly (not with HyperGNN)
-    - logging_path:  path that the log file is saved
+    - logging_path: path that the log file is saved
     - res_path: path that the result file is saved
     - folder_path: directory containing the data
 #### Transfer learning
