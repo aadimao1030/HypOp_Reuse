@@ -25,17 +25,17 @@ conda install nccl
 ```
 ##### Step1: Distributed Training
 
-In `run_dist.py`, set `test_mode` variable to `dist`
+In `run_dist.py`, set `test_mode` variable to `dist`.
 
 ```python
-python -m torch.distributed.launch run_dist.py
+python -m torch.distributed.launch run_dist.py.
 ```
 
 ##### Step2: Postprocessing
 
-In configs, set "load best out" to true, set "epoch" to 0
+In configs, set "load best out" to true, set "epoch" to 0.
 
-In `run_dist.py`, set `test_mode` variable to `infer`
+In `run_dist.py`, set `test_mode` variable to `infer`.
 
 ```python
 python -m torch.distributed.launch run_dist.py
@@ -59,11 +59,11 @@ Our experiments comprise three components. The configuration files for these exp
 
   - **Experiments on multi-GPUs**: ( Including two steps, use `run_dist.py`)
       - Hypergraph MaxCut task using HypOp in distributed experiments
-        - Step1: Ditributed training, set `test_mode` in `run_dist.py` to `dist`, set config file to `configs/dist_configs/maxcut_stanford_for_dist.json`
-        - Step2: Fine-tuning infer, set `test_mode` in `run_dist.py` to `infer`, set config file to `configs/infer_configs/maxcut_stanford_for_dist.json`
+        - Step1: Ditributed training, set `test_mode` in `run_dist.py` to `dist`, set config file to `configs/dist_configs/maxcut_stanford_for_dist.json`.
+        - Step2: Fine-tuning infer, set `test_mode` in `run_dist.py` to `infer`, set config file to `configs/infer_configs/maxcut_stanford_for_dist.json`.
       - Hypergraph MaxCut task using HypOp in parallel multi-GPUs experiments
-        - Step1: Parallel training, set `test_mode` in `run_dist.py` to `multi_gpu`, set config file to `configs/dist_configs/maxcut_stanford_for_paral`
-        - Step2: Fine-tuning infer, set `test_mode` in `run_dist.py` to `infer`, set config file to `configs/dist_configs/maxcut_stanford_for_paral`
+        - Step1: Parallel training, set `test_mode` in `run_dist.py` to `multi_gpu`, set config file to `configs/dist_configs/maxcut_stanford_for_paral`.
+        - Step2: Fine-tuning infer, set `test_mode` in `run_dist.py` to `infer`, set config file to `configs/dist_configs/maxcut_stanford_for_paral`.
   
 ### Part2: Robustness evaluation of HypOp
 This section primarily evaluates the robustness of HypOp across various distributed training configurations.
