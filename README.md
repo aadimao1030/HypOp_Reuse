@@ -18,7 +18,7 @@ pip install -r dependency.txt
 conda activate environment_name
 python run run.py
 ```
-### Quickly start: Distributed Hypergraph MaxCut on MULTI-GPUs
+### Quick start: Distributed Hypergraph MaxCut on MULTI-GPUs
 This section requires at least two GPUs on your system. We use the NCCL backend for distributed training. You can install NCCL by following the instructions below:
 ```bash
 conda install nccl
