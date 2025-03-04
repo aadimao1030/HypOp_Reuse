@@ -1,0 +1,2 @@
+INFO:main:G_reg_1000_5.txt:, running time: 74.2963003, res: [tensor(-341.)], res_th: [tensor(-326.)], training_time: [49.8984534], mapping_time: [24.252314]
+INFO:main:G_reg_1500_5.txt:, running time: 117.3213944, res: [tensor(-522.)], res_th: [tensor(-507.)], training_time: [62.194394299999985], mapping_time: [54.87155240000001]

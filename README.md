@@ -1,57 +1,119 @@
 # HypOp
+This repository contains the Pytorch implementation of HypOp framework, as described in Nature Machine Intelligence paper [Distributed Constrained Combinatorial Optimization leveraging Hypergraph Neural Networks](https://www.nature.com/articles/s42256-024-00833-7). HypOp is a combinatorial optimization solver designed to efficiently address general problems with higher-order constraints. It leverages hypergraph neural networks to extend previous algorithms, enabling them to handle arbitrary cost functions. Additionally, it incorporates a distributed training architecture to efficiently manage large-scale tasks.
+## Experimental Setup
+Our experiment were conducted on an Intel Xeon 8358P CPU with a single NVIDIA RTX 4090 GPU or multiple GPUs, depending on the task.
 
-Here you can find the code for HypOp, a tool for combinatorial optimization that employs hypergraph neural networks. It is versatile and can address a range of constrained optimization problems.
-In the current version, we have included the following problems: graph and hypergraph MaxCut, graph MIS, SAT, and Resource Allocation (see paper for details). To add new problems, add the appropriate loss function in the loss.py file and add the appropriate function in data_reading.py to read your specific dataset. 
-
-#### Install Required Packages
-
+---
+## System Requirements
+The source code developed in python 3.9 using Pytorch 2.3.1. The required python dependencies are given in `dependency.txt`, which was tested on CentOS-7 and Windows-11 with CUDA Version 11.8.
 ```bash
+conda create --name environment_name python==3.9
+conda activate environment_name
 pip install -r dependency.txt
 ```
 
-## Experiment Setups
+### Quick Start: Hypergraph MaxCut on CPU
 
-Performance benchmarks were conducted on an Intel Xeon 8358P CPU with a single or multiple NVIDIA RTX 4090 GPUs depending on the task.
+```bash
+conda activate environment_name
+python run run.py
+```
+### Quickly start: Distributed Hypergraph MaxCut on MULTI-GPUs
+This section requires at least two GPUs on your system. We use the NCCL backend for distributed training. You can install NCCL by following the instructions below:
+```bash
+conda install nccl
+```
+##### Step 1: Distributed Training
 
----
+In `run_dist.py`, set `test_mode` variable to `dist`
 
-### CPU Experiments
+```python
+python -m torch.distributed.launch run_dist.py
+```
 
-All CPU experiments are configured as follows. You only need to replace the path in `run.py`:
+##### Step2: Postprocessing
 
-- **Hypergraph MaxCut Experiment**:
-  - Use `configs/Hypermaxcut_syn.json`
-  - For SA (Simulated Annealing): Set `"epoch"` in `configs/Hypermaxcut_syn.json` to `1`
-  - For Adam: Set `"Adam"` to `true`
-  - For bipartite: Set `"mode"` to `"bipartite"`
+in configs, set "load best out" to true, set "epoch" to 0
 
-- **MIS (Maximum Independent Set) Experiment**:
-  - Use `configs/maxind_syn_qubo.json`
-  - For pignn: Set `"Niter_h"` to `1`
+In `run_dist.py`, set `test_mode` variable to `infer`
 
-- **Transfer Learning**:
-  - From MaxCut to MIS: `configs/maxind_transfer.json`
-  - From Hypermaxcut to Hypermincut: `configs/mincut_transfer.json`
-
----
-
-### Distributed Experiments
-
-For distributed experiments, replace the path in `run_dist.py`:
-
-- **Hypergraph MaxCut Experiment**:
-  - Stanford datasets: `configs/dist_configs/maxcut_stanford_for.json`
-  - Arxiv datasets: `configs/dist_configs/maxcut_arxiv_for.json`
-
-- **Parallel Multi-GPU Experiments**:
-  - Set `"test_mode"` to `"multi_gpu"` in `run_dist.py`
+```python
+python -m torch.distributed.launch run_dist.py
+```
 
 ---
+## Reusability Experiments
+Our experiments comprise three components. The configuration files for these experiments are detailed below:
+### Part1: Reproduction the reported results
+- **Experiments on CPU**: ( In `run.py`, set the path of config files to accommodate different experiments.)
+    - Hypergraph MaxCut task
+      - HypOp: `configs/Hypermaxcut_hypop.json`
+      - Bipartite: `configs/Hypermaxcut_bipartite.json`
+      - Simulated Annealing (SA), `configs/Hypermaxcut_sa.json`
+      - ADAM: `configs/Hypermaxcut_adam.json`
+      
+    - Graph Maximum independent set (MIS) task
+      - HypOp: `configs/MIS_hypop.json`
+      - PI-GNN: `configs/MIS_pignn.json`
+      
 
-### Generalization Experiments
+  - **Experiments on multi-GPUs**: ( Including two steps, use `run_dist.py`)
+      - Hypergraph MaxCut task using HypOp in distributed experiments
+        - Step1: Ditributed training, set `test_mode` in `run_dist.py` to `dist`, set config file to `configs/dist_configs/maxcut_stanford_for_dist.json`
+        - Step2: Fine-tuning infer, set `test_mode` in `run_dist.py` to `infer`, set config file to `configs/infer_configs/maxcut_stanford_for_dist.json`
+      - Hypergraph MaxCut task using HypOp in parallel multi-GPUs experiments
+        - Step1: Parallel training, set `test_mode` in `run_dist.py` to `multi_gpu`, set config file to `configs/dist_configs/maxcut_stanford_for_paral`
+        - Step2: Fine-tuning infer, set `test_mode` in `run_dist.py` to `infer`, set config file to `configs/dist_configs/maxcut_stanford_for_paral`
+  
+### Part2: Robustness evaluation
+This section primarily evaluates the robustness of HypOp across various distributed training configurations.
+- **Alternate the number of GPUs**
+    - Hypergraph MaxCut task using HypOp: Set GPU number `'num_gpus'` in `'configs/dist_configs/maxcut_stanford_for_dist.json'` to `1,2,4,8`.
+- **Alternate the graph partition strategy**
+    - Hypergraph MaxCut task using HypOp: set `'partition_strategy'` in `'configs/dist_configs/maxcut_stanford_for_dist.json'` to `'original', 'round_robin', 'random'`.
+- **Alternate fine-tuning algorithms**
+    - Hypergraph MaxCut task using HypOp: set `'fine_tuning'` in `'configs/dist_configs/maxcut_stanford_for_dist.json'` to `'PSO', 'ACO', 'GA'`.
 
-- **MaxClique Problem**:
-  - Run `maxclique_training.py`
+### Part3: Generalizability evaluation
+This part mainly uses HypOp to solve other combinatorial optimization problems:
+- **Apply HypOp on Maximum Clique Problem**
 
-- **QAP Problem**:
-  - Run `QAP_training.py`
+    ```bash
+    python maxclique_training.py
+    ```
+- **Apply HypOp on Quadratic Assignment Problem**
+    ```bash
+    python QAP_training.py
+    ```
+  
+---
+## The follows are parameter introductions:
+#### Mode Parameters
+    - data: stanford/hypergraph/NDC
+    - mode: maxcut/maxind/QUBO
+    - Adam: true/false; false default
+#### Training Parameters
+    - lr: learning rate
+    - epoch: number of training epochs
+    - tol: training loss tolerace (used in Early Stop strategy)
+    - patience: training patience (used in Early Stop strategy)
+    - GD: false/true (true for direct optimization with gradient descent) 
+    - load_G: false/true (true for when G is already computed and saved and want to load it)
+    - sparsify: false/true (true for when the graph is too dense and need to sparsify it)
+    - sparsify_p: the probability of removing an edge if sparsify is true
+#### Utils Parameters    
+    - mapping: threshold/distribution
+    - threshold: trivial mapping that maps numbers less than 0.5 to 0 and greater than 0.5 to 1
+    - distribution: mapping using simulated annealing
+    - N_realize: only used when mapping = distribution: number of realizations from the distribution
+    - Niter_h: only used when mapping = distribution: number of simulated annealing iterations
+    - t: simulated annealing initial temperature
+    - random_init: initializing simulated annealing randomly (not with HyperGNN)
+    - logging_path:  path that the log file is saved
+    - res_path: path that the result file is saved
+    - folder_path: directory containing the data
+#### Transfer learning
+    - model_save_path: directory to save the model
+    - model_load_path: directory to load the model
+	- transfer: false/true (true for transfer learning)
+	- initial_transfer: false/true (true for initializing the models with a pre-trained model)

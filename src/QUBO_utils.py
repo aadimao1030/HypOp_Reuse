@@ -5,7 +5,9 @@ import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
 
-# from dgl.nn.pytorch import GraphConv
+import random
+
+from dgl.nn.pytorch import GraphConv
 from itertools import chain, islice
 from time import time
 
@@ -252,36 +254,3 @@ def run_gnn_training(q_torch, dgl_graph, net, embed, optimizer, number_epochs, t
     print(len(probs))
     print(probs.shape)
     return net, epoch, final_bitstring, best_bitstring
-
-
-
-def mapping_distribution(probs, N_realize, Niter_h, n, weights, constraints, all_weights, inc, penalty, hyper):
-    probsd={x+1: probs[x] for x in range(len(probs))}
-    #best_outs= {x: 0.5 for x in best_outs.keys()}
-    #best_outs = {x: np.maxclique_data.uniform(0,1) for x in best_outs.keys()}
-    best_score = float('inf')
-    lb = float('inf')
-    _loss = loss_func
-    for rea in range(N_realize):
-        res = {x: np.random.choice(range(2), p=[1 - probs[x], probs[x]]) for x in probs.keys()}
-        ord = random.sample(range(1, n + 1), n)
-        t = 1
-        for it in range(params['Niter_h']):
-            print(it)
-            for i in ord:
-                temp = res.copy()
-                # temp = pr.copy()
-                if res[i] == 0:
-                    temp[i] = 1
-                else:
-                    temp[i] = 0
-                lt = _loss(temp, info[i], weights[i], penalty=penalty, hyper=hyper)
-                l1 = _loss(res, info[i], weights[i], penalty=penalty, hyper=hyper)
-                if lt < l1 or np.exp(- (lt - l1) / t) > np.random.uniform(0, 1):
-                    res = temp
-            t = t * 0.95
-        score = _loss(res, constraints, all_weights, hyper=hyper)
-        if score < best_score:
-            best_res =res
-            best_score = score
-    return best_res

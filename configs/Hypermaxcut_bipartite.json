@@ -1,19 +1,29 @@
 {
     "data": "hypergraph",
-    "mode": "bipartite",
+    "mode": "maxcut",
+    "K": 1,
+    "Adam": false,
     "random_init": "none",
     "transfer": false,
     "initial_transfer": false,
     "GD": false,
-    "mapping": "distribution",
+    "Att": false,
+    "dropout": 0,
+    "f_input": false,
+    "f": 70,
+    "penalty_inc": false,
+    "penalty_c": 1e-5,
+    "n_partitions": 4,
+
 
     "lr": 1e-2,
     "epoch": 1e2,
     "tol": 1e-4,
-    "logging_path": "./log/hypermaxcut/Hypermaxcut_syn.log",
-
-    "res_path": "./res/hypermaxcut/Hypermaxcut_syn.hdf5",
-    "folder_path": "./data/hypergraph_data/synthetic/new/all/",
+    "mapping": "distribution",
+    "boosting_mapping": 1,
+    "logging_path": "./log/hypermaxcut/Hypermaxcut_bipartite.log",
+    "res_path": "./res/hypermaxcut/Hypermaxcut_bipartite.hdf5",
+    "folder_path": "./data/hypergraph_data/bipartite/",
     "plot_path": "./res/plots/",
     "model_save_path": "./models/hypermaxcut/",
     "model_load_path": "./models/hypermaxcut/",
@@ -23,21 +33,28 @@
     "hyper": true,
     "penalty": 0,
     "patience": 50,
-    "sparsify": false,
-    "sparsify_p": 0.8,
-    "load_G": false,
-    "boosting_mapping": 1,
-    "load best out": false,
+    "load_best_out" : false,
 
-    "K": 1,
-    "Adam": false,
-    "minimum_good_samples": 1,
-    "random_portion": 0.6,
-    "local_portion": 0.2,
-    "cross_portion": 0.2,
-    "num_samples": 1,
+    "coarsen": false,
+    "sparcify": false,
+    "sparcify_p": 0.8,
+
 
     "multi_gpu": 0,
     "num_gpus": 1,
-    "test_multi_gpu": 0
+    "test_multi_gpu": 0,
+
+    "partition_strategy": "original",
+    "fine_tuning": "SA",
+
+    "N_particles":1800,
+
+    "population_size": 100,
+    "n_parents": 50,
+    "crossover_rate": 0.7,
+    "mutation_rate": 0.01,
+    "N_generations": 20,
+
+    "N_ants":100,
+    "evaporation_rate":0.2
 }

@@ -200,282 +200,276 @@ def mapping_algo(best_outs, weights, info, mode):
     return res
 
 def mapping_distribution(best_outs, params, n, info, weights, constraints, all_weights, inc, penalty, hyper):
-    if params['random_init']=='one_half':
-        best_outs= {x: 0.5 for x in best_outs.keys()}
-    elif params['random_init']=='uniform':
-        best_outs = {x: np.random.uniform(0,1) for x in best_outs.keys()}
-    elif params['random_init'] == 'threshold':
-        best_outs = {x: 0 if best_outs[x] < 0.5 else 1 for x in best_outs.keys()}
+    fine_tuning = params['fine_tuning']
+    if fine_tuning == "SA":
+        if params['random_init']=='one_half':
+            best_outs= {x: 0.5 for x in best_outs.keys()}
+        elif params['random_init']=='uniform':
+            best_outs = {x: np.random.uniform(0,1) for x in best_outs.keys()}
+        elif params['random_init'] == 'threshold':
+            best_outs = {x: 0 if best_outs[x] < 0.5 else 1 for x in best_outs.keys()}
 
-    best_score = float('inf')
-    lb = float('inf')
-    if params['mode'] == 'sat':
-        _loss = loss_sat_numpy
-    elif params['mode'] == 'maxcut' or params['mode'] == 'QUBO_maxcut' or params['mode'] == 'maxcut_annea':
-        _loss = loss_maxcut_numpy
-    elif params['mode'] == 'maxind' or params['mode'] == 'QUBO':
-        _loss = loss_maxind_numpy
-    elif params['mode'] == 'task':
-        _loss = loss_task_numpy
-    elif params['mode'] == 'mincut':
-        _loss = loss_mincut_numpy
+        best_score = float('inf')
+        lb = float('inf')
+        if params['mode'] == 'sat':
+            _loss = loss_sat_numpy
+        elif params['mode'] == 'maxcut' or params['mode'] == 'QUBO_maxcut' or params['mode'] == 'maxcut_annea':
+            _loss = loss_maxcut_numpy
+        elif params['mode'] == 'maxind' or params['mode'] == 'QUBO':
+            _loss = loss_maxind_numpy
+        elif params['mode'] == 'task':
+            _loss = loss_task_numpy
+        elif params['mode'] == 'mincut':
+            _loss = loss_mincut_numpy
 
-    for rea in range(params['N_realize']):
-        res = {x: np.random.choice(range(2), p=[1 - best_outs[x], best_outs[x]]) for x in best_outs.keys()}
-        best_score = _loss(res, constraints, all_weights, hyper=hyper)
-        best_res = copy.deepcopy(res)
-        t = params['t']
-        # l1=best_score
-        prev_score=best_score
-        for it in range(params['Niter_h']):
-            print(it)
-            # temp = copy.deepcopy(res)
-            ord = random.sample(range(1, n + 1), n)
-            # j=0
-            for i in ord:
-                # j+=1
-                temp = copy.deepcopy(res)
-                # temp = pr.copy()
-                if res[i] == 0:
-                    temp[i] = 1
-                else:
-                    temp[i] = 0
-                # if (j) % stepsize == 0:
-                # lt = _loss(temp, constraints, all_weights, penalty=penalty,  hyper=hyper)
-                # l1 = _loss(res, constraints, all_weights, penalty=penalty, hyper=hyper)
-                lt = _loss(temp, info[i], weights[i], penalty=penalty, hyper=hyper)
-                l1 = _loss(res, info[i], weights[i], penalty=penalty, hyper=hyper)
-                if lt < l1 or np.exp(- (lt - l1) / t) > np.random.uniform(0, 1):
-                    res = copy.deepcopy(temp)
-                    # l1=lt
-                    # print(l1)
-                    # temp=copy.deepcopy(res)
-            t = t * 0.95
-            if (it+1)%100==0:
-                # score = _loss(res, constraints, all_weights, hyper=hyper)
-                score=l1
-                if score==prev_score:
-                    print('early stopping of SA')
-                    break
-                else:
-                    prev_score = score
-                    print(score)
-
-        score = _loss(res, constraints, all_weights, hyper=hyper)
-        print(score)
-        if score < best_score:
-            best_res =copy.deepcopy(res)
-            best_score = score
-    return best_res
-def mapping_distribution_pso(best_outs, params, n, info, weights, constraints, all_weights, inc, penalty, hyper):
-    # num_particles = params.get('num_particles', 30)
-    # max_iterations = params.get('max_iterations', 100)
-    # inertia_weight = params.get('inertia_weight', 0.7)
-    # cognitive_constant = params.get('cognitive_constant', 1.5)
-    # social_constant = params.get('social_constant', 1.5)
-    num_particles = 30
-    max_iterations = 100
-    inertia_weight = 0.7
-    cognitive_constant = 1.5
-    social_constant = 1.5
-    if params['mode'] == 'sat':
-        def objective_function(solution):
-            return loss_sat_numpy(solution, constraints, all_weights, hyper=hyper)
-    elif params['mode'] in ['maxcut', 'QUBO_maxcut', 'maxcut_annea']:
-        def objective_function(solution):
-            return loss_maxcut_numpy(solution, constraints, all_weights, hyper=hyper)
-    elif params['mode'] in ['maxind', 'QUBO']:
-        def objective_function(solution):
-            return loss_maxind_numpy(solution, constraints, all_weights, hyper=hyper)
-    elif params['mode'] == 'task':
-        def objective_function(solution):
-            return loss_task_numpy(solution, constraints, all_weights, hyper=hyper)
-    elif params['mode'] == 'mincut':
-        def objective_function(solution):
-            return loss_mincut_numpy(solution, constraints, all_weights, hyper=hyper)
-    else:
-        raise ValueError("Invalid mode specified.")
-
-    particles = []
-    for _ in range(num_particles):
-        particle = {}
-        particle['position'] = np.random.rand(n)
-        particle['velocity'] = np.zeros(n)
-        binary_position = (particle['position'] > 0.5).astype(int)
-        particle['best_position'] = particle['position'].copy()
-        particle['best_score'] = objective_function(binary_position)
-        particles.append(particle)
-
-    gbest_position = min(particles, key=lambda p: p['best_score'])['best_position'].copy()
-    gbest_score = min(particles, key=lambda p: p['best_score'])['best_score']
-
-    for iteration in range(max_iterations):
-        for particle in particles:
-
-            r1 = np.random.rand(n)
-            r2 = np.random.rand(n)
-            cognitive_velocity = cognitive_constant * r1 * (particle['best_position'] - particle['position'])
-            social_velocity = social_constant * r2 * (gbest_position - particle['position'])
-            particle['velocity'] = (inertia_weight * particle['velocity'] +
-                                    cognitive_velocity +
-                                    social_velocity)
-
-            particle['position'] += particle['velocity']
-
-            particle['position'] = np.clip(particle['position'], 0, 1)
-
-            binary_position = (particle['position'] > 0.5).astype(int)
-
-            score = objective_function(binary_position)
-
-            if score < particle['best_score']:
-                particle['best_position'] = particle['position'].copy()
-                particle['best_score'] = score
-
-                if score < gbest_score:
-                    gbest_position = particle['position'].copy()
-                    gbest_score = score
-        print(f"Iteration {iteration + 1}/{max_iterations}, Best Score: {gbest_score}")
-
-    best_solution = (gbest_position > 0.5).astype(int)
-    best_res = {i + 1: best_solution[i] for i in range(n)}
-    return best_res
-
-def mapping_distribution_ga(best_outs, params, n, info, weights, constraints, all_weights, inc, penalty, hyper):
-    if params['random_init'] == 'one_half':
-        best_outs = {x: 0.5 for x in best_outs.keys()}
-    elif params['random_init'] == 'uniform':
-        best_outs = {x: np.random.uniform(0, 1) for x in best_outs.keys()}
-    elif params['random_init'] == 'threshold':
-        best_outs = {x: 0 if best_outs[x] < 0.5 else 1 for x in best_outs.keys()}
-
-    best_score = float('inf')
-    best_res = None
-
-    # Create initial population
-    population_size = params['population_size']
-    population = [
-        {x: np.random.choice([0, 1], p=[1 - best_outs[x], best_outs[x]]) for x in best_outs.keys()}
-        for _ in range(population_size)
-    ]
-
-    # Define loss function based on mode
-    if params['mode'] == 'sat':
-        _loss = loss_sat_numpy
-    elif params['mode'] in ['maxcut', 'QUBO_maxcut', 'maxcut_annea']:
-        _loss = loss_maxcut_numpy
-    elif params['mode'] in ['maxind', 'QUBO']:
-        _loss = loss_maxind_numpy
-    elif params['mode'] == 'task':
-        _loss = loss_task_numpy
-    elif params['mode'] == 'mincut':
-        _loss = loss_mincut_numpy
-
-    for rea in range(params['N_realize']):
-        for generation in range(params['N_generations']):
-            # Evaluate fitness of the population
-            fitness_scores = [1 / (_loss(ind, constraints, all_weights, hyper=hyper) + 1e-6) for ind in population]
-
-            # Select parents based on fitness
-            parents_indices = np.random.choice(range(population_size), size=params['n_parents'],
-                                               p=fitness_scores / np.sum(fitness_scores))
-            parents = [population[i] for i in parents_indices]
-
-            # Crossover
-            offspring = []
-            for i in range(0, len(parents), 2):
-                if i + 1 < len(parents):
-                    parent1, parent2 = parents[i], parents[i + 1]
-                    child1, child2 = {}, {}
-                    for key in best_outs.keys():
-                        # Single-point crossover
-                        if random.random() < params['crossover_rate']:
-                            child1[key] = parent1[key]
-                            child2[key] = parent2[key]
-                        else:
-                            child1[key] = parent2[key]
-                            child2[key] = parent1[key]
-                    offspring.append(child1)
-                    offspring.append(child2)
-            # Mutation
-            for ind in offspring:
-                for key in best_outs.keys():
-                    if random.random() < params['mutation_rate']:
-                        ind[key] = 1 - ind[key]  # Flip the bit
-
-            # Replace the old population with the new offspring
-            population = population + offspring
-            population = sorted(population, key=lambda ind: _loss(ind, constraints, all_weights, hyper=hyper))[
-                         :population_size]
-
-            # Update best result
-            for ind in population:
-                score = _loss(ind, constraints, all_weights, hyper=hyper)
-                if score < best_score:
-                    best_res = copy.deepcopy(ind)
-                    best_score = score
-
-            print(f'Generation {generation + 1}/{params["N_generations"]}, Best Score: {best_score}')
-
-    return best_res
-
-
-def mapping_distribution_aco(best_outs, params, n, info, weights, constraints, all_weights, inc, penalty, hyper):
-    if params['random_init'] == 'one_half':
-        best_outs = {x: 0.5 for x in best_outs.keys()}
-    elif params['random_init'] == 'uniform':
-        best_outs = {x: np.random.uniform(0, 1) for x in best_outs.keys()}
-    elif params['random_init'] == 'threshold':
-        best_outs = {x: 0 if best_outs[x] < 0.5 else 1 for x in best_outs.keys()}
-
-    if params['mode'] == 'sat':
-        loss_function = loss_sat_numpy
-    elif params['mode'] in ['maxcut', 'QUBO_maxcut', 'maxcut_annea']:
-        loss_function = loss_maxcut_numpy
-    elif params['mode'] in ['maxind', 'QUBO']:
-        loss_function = loss_maxind_numpy
-    elif params['mode'] == 'task':
-        loss_function = loss_task_numpy
-    elif params['mode'] == 'mincut':
-        loss_function = loss_mincut_numpy
-
-    best_score = float('inf')
-    pheromone = {x: 1.0 for x in best_outs.keys()}
-
-    for rea in range(params['N_realize']):
-        ants_solutions = []
-        for ant in range(params['N_ants']):
+        for rea in range(params['N_realize']):
             res = {x: np.random.choice(range(2), p=[1 - best_outs[x], best_outs[x]]) for x in best_outs.keys()}
-            score = loss_function(res, constraints, all_weights, hyper)
-            ants_solutions.append((res, score))
+            best_score = _loss(res, constraints, all_weights, hyper=hyper)
+            best_res = copy.deepcopy(res)
+            t = params['t']
+            # l1=best_score
+            prev_score=best_score
+            for it in range(params['Niter_h']):
+                print(it)
+                # temp = copy.deepcopy(res)
+                ord = random.sample(range(1, n + 1), n)
+                # j=0
+                for i in ord:
+                    # j+=1
+                    temp = copy.deepcopy(res)
+                    # temp = pr.copy()
+                    if res[i] == 0:
+                        temp[i] = 1
+                    else:
+                        temp[i] = 0
+                    # if (j) % stepsize == 0:
+                    # lt = _loss(temp, constraints, all_weights, penalty=penalty,  hyper=hyper)
+                    # l1 = _loss(res, constraints, all_weights, penalty=penalty, hyper=hyper)
+                    lt = _loss(temp, info[i], weights[i], penalty=penalty, hyper=hyper)
+                    l1 = _loss(res, info[i], weights[i], penalty=penalty, hyper=hyper)
+                    if lt < l1 or np.exp(- (lt - l1) / t) > np.random.uniform(0, 1):
+                        res = copy.deepcopy(temp)
+                        # l1=lt
+                        # print(l1)
+                        # temp=copy.deepcopy(res)
+                t = t * 0.95
+                if (it+1)%100==0:
+                    # score = _loss(res, constraints, all_weights, hyper=hyper)
+                    score=l1
+                    if score==prev_score:
+                        print('early stopping of SA')
+                        break
+                    else:
+                        prev_score = score
+                        print(score)
+
+            score = _loss(res, constraints, all_weights, hyper=hyper)
+            print(score)
+            if score < best_score:
+                best_res =copy.deepcopy(res)
+                best_score = score
+
+    elif fine_tuning == "PSO":
+        n = len(constraints)
+        w = params.get('inertia_weight', 0.7)
+        c1 = params.get('c1', 1.5)
+        c2 = params.get('c2', 1.5)
+
+        if params['random_init'] == 'one_half':
+            best_outs = {x: 0.5 for x in range(n)}
+        elif params['random_init'] == 'uniform':
+            best_outs = {x: np.random.uniform(0, 1) for x in range(n)}
+        elif params['random_init'] == 'threshold':
+            best_outs = {x: 0 if np.random.uniform(0, 1) < 0.5 else 1 for x in range(n)}
+
+        particles = [{x: np.random.choice([0, 1]) for x in best_outs.keys()} for _ in range(params['N_particles'])]
+        velocities = [{x: np.random.uniform(-1, 1) for x in best_outs.keys()} for _ in
+                    range(params['N_particles'])]
+        p_best = copy.deepcopy(particles)
+        best_res = None
+        g_best_score = float('inf')
+
+        if params['mode'] == 'sat':
+            _loss = loss_sat_numpy
+        elif params['mode'] in ['maxcut', 'QUBO_maxcut', 'maxcut_annea']:
+            _loss = loss_maxcut_numpy
+        elif params['mode'] in ['maxind', 'QUBO']:
+            _loss = loss_maxind_numpy
+        elif params['mode'] == 'task':
+            _loss = loss_task_numpy
+        elif params['mode'] == 'mincut':
+            _loss = loss_mincut_numpy
+
+        for i, particle in enumerate(particles):
+            score = _loss(particle, constraints, all_weights, hyper=hyper)
+            if score < g_best_score:
+                best_res = copy.deepcopy(particle)
+                g_best_score = score
 
         for it in range(params['Niter_h']):
-            for ant in ants_solutions:
-                res, score = ant
+            print(f"Iteration {it}")
 
-                for i in range(n):
+            for i, particle in enumerate(particles):
+                for x in particle.keys():
+                    r1 = np.random.uniform(0, 1)
+                    r2 = np.random.uniform(0, 1)
+                    velocities[i][x] = (w * velocities[i][x] +
+                                        c1 * r1 * (p_best[i][x] - particle[x]) +
+                                        c2 * r2 * (best_res[x] - particle[x]))
 
-                    transition_probs = [pheromone[x] for x in best_outs.keys()]
-                    chosen = np.random.choice(list(best_outs.keys()), p=transition_probs / np.sum(transition_probs))
-                    temp = res.copy()
-                    temp[chosen] = 1 - temp[chosen]
+                    particle[x] += velocities[i][x]
+                    particle[x] = 1 if particle[x] > 0.5 else 0
 
-                    new_score = loss_function(temp, constraints, all_weights, hyper)
-                    if new_score < score:
-                        ants_solutions.remove(ant)
-                        ants_solutions.append((temp, new_score))
-                        pheromone[chosen] += 1
-                        break
+                score = _loss(particle, constraints, all_weights, hyper=hyper)
 
-            for key in pheromone.keys():
-                pheromone[key] *= (1 - params['evaporation_rate'])
+                p_best_score = _loss(p_best[i], constraints, all_weights, hyper=hyper)
+                if score < p_best_score:
+                    p_best[i] = copy.deepcopy(particle)
 
-            print(f"Iteration {it}: Best score: {min(ants_solutions, key=lambda x: x[1])[1]}")
+                if score < g_best_score:
+                    best_res = copy.deepcopy(particle)
+                    g_best_score = score
 
-        current_best = min(ants_solutions, key=lambda x: x[1])
-        if current_best[1] < best_score:
-            best_score = current_best[1]
-            best_res = current_best[0]
+            w = w * 0.95
+
+            if (it + 1) % 100 == 0:
+                print(f"Global best score at iteration {it + 1}: {g_best_score}")
+                if g_best_score < params.get('early_stop_threshold', float('inf')):
+                    print("Early stopping condition met.")
+                    break
+        
+    elif fine_tuning == "ACO":
+        if params['random_init'] == 'one_half':
+            best_outs = {x: 0.5 for x in best_outs.keys()}
+        elif params['random_init'] == 'uniform':
+            best_outs = {x: np.random.uniform(0, 1) for x in best_outs.keys()}
+        elif params['random_init'] == 'threshold':
+            best_outs = {x: 0 if best_outs[x] < 0.5 else 1 for x in best_outs.keys()}
+
+        if params['mode'] == 'sat':
+            loss_function = loss_sat_numpy
+        elif params['mode'] in ['maxcut', 'QUBO_maxcut', 'maxcut_annea']:
+            loss_function = loss_maxcut_numpy
+        elif params['mode'] in ['maxind', 'QUBO']:
+            loss_function = loss_maxind_numpy
+        elif params['mode'] == 'task':
+            loss_function = loss_task_numpy
+        elif params['mode'] == 'mincut':
+            loss_function = loss_mincut_numpy
+
+        best_score = float('inf')
+        pheromone = {x: 1.0 for x in best_outs.keys()}
+
+        for rea in range(params['N_realize']):
+            ants_solutions = []
+            for ant in range(params['N_ants']):
+                res = {x: np.random.choice(range(2), p=[1 - best_outs[x], best_outs[x]]) for x in best_outs.keys()}
+                score = loss_function(res, constraints, all_weights, hyper)
+                ants_solutions.append((res, score))
+
+            for it in range(params['Niter_h']):
+                for ant in ants_solutions:
+                    res, score = ant
+
+                    for i in range(n):
+
+                        transition_probs = [pheromone[x] for x in best_outs.keys()]
+                        chosen = np.random.choice(list(best_outs.keys()), p=transition_probs / np.sum(transition_probs))
+                        temp = res.copy()
+                        temp[chosen] = 1 - temp[chosen]
+
+                        new_score = loss_function(temp, constraints, all_weights, hyper)
+                        if new_score < score:
+                            ants_solutions.remove(ant)
+                            ants_solutions.append((temp, new_score))
+                            pheromone[chosen] += 1
+                            break
+
+                for key in pheromone.keys():
+                    pheromone[key] *= (1 - params['evaporation_rate'])
+
+                print(f"Iteration {it}: Best score: {min(ants_solutions, key=lambda x: x[1])[1]}")
+
+            current_best = min(ants_solutions, key=lambda x: x[1])
+            if current_best[1] < best_score:
+                best_score = current_best[1]
+                best_res = current_best[0]
+
+    elif fine_tuning == "GA":
+        if params['random_init'] == 'one_half':
+            best_outs = {x: 0.5 for x in best_outs.keys()}
+        elif params['random_init'] == 'uniform':
+            best_outs = {x: np.random.uniform(0, 1) for x in best_outs.keys()}
+        elif params['random_init'] == 'threshold':
+            best_outs = {x: 0 if best_outs[x] < 0.5 else 1 for x in best_outs.keys()}
+
+        best_score = float('inf')
+        best_res = None
+
+        # Create initial population
+        population_size = params['population_size']
+        population = [
+            {x: np.random.choice([0, 1], p=[1 - best_outs[x], best_outs[x]]) for x in best_outs.keys()}
+            for _ in range(population_size)
+        ]
+
+        # Define loss function based on mode
+        if params['mode'] == 'sat':
+            _loss = loss_sat_numpy
+        elif params['mode'] in ['maxcut', 'QUBO_maxcut', 'maxcut_annea']:
+            _loss = loss_maxcut_numpy
+        elif params['mode'] in ['maxind', 'QUBO']:
+            _loss = loss_maxind_numpy
+        elif params['mode'] == 'task':
+            _loss = loss_task_numpy
+        elif params['mode'] == 'mincut':
+            _loss = loss_mincut_numpy
+
+        for rea in range(params['N_realize']):
+            for generation in range(params['N_generations']):
+                # Evaluate fitness of the population
+                fitness_scores = [1 / (_loss(ind, constraints, all_weights, hyper=hyper) + 1e-6) for ind in population]
+
+                # Select parents based on fitness
+                parents_indices = np.random.choice(range(population_size), size=params['n_parents'],
+                                                   p=fitness_scores / np.sum(fitness_scores))
+                parents = [population[i] for i in parents_indices]
+
+                # Crossover
+                offspring = []
+                for i in range(0, len(parents), 2):
+                    if i + 1 < len(parents):
+                        parent1, parent2 = parents[i], parents[i + 1]
+                        child1, child2 = {}, {}
+                        for key in best_outs.keys():
+                            # Single-point crossover
+                            if random.random() < params['crossover_rate']:
+                                child1[key] = parent1[key]
+                                child2[key] = parent2[key]
+                            else:
+                                child1[key] = parent2[key]
+                                child2[key] = parent1[key]
+                        offspring.append(child1)
+                        offspring.append(child2)
+                # Mutation
+                for ind in offspring:
+                    for key in best_outs.keys():
+                        if random.random() < params['mutation_rate']:
+                            ind[key] = 1 - ind[key]  # Flip the bit
+
+                # Replace the old population with the new offspring
+                population = population + offspring
+                population = sorted(population, key=lambda ind: _loss(ind, constraints, all_weights, hyper=hyper))[
+                             :population_size]
+
+                # Update best result
+                for ind in population:
+                    score = _loss(ind, constraints, all_weights, hyper=hyper)
+                    if score < best_score:
+                        best_res = copy.deepcopy(ind)
+                        best_score = score
+
+                print(f'Generation {generation + 1}/{params["N_generations"]}, Best Score: {best_score}')
 
     return best_res
 
@@ -601,63 +595,29 @@ def mapping_distribution_vec(best_outs, params, n, info, weights, constraints, a
             res_x=[0 for _ in range(params['n_partitions'])]
             res_x[part]=1
             res[x]=res_x
-        # res = {x: [np.maxclique_data.choice(range(2), p=[1 - best_outs[x][i], best_outs[x][i]]) for i in range(L)] for x in
-        #        best_outs.keys()}
         res_array = np.array(list(res.values()))
-        # lbest = _loss(res, lenc, leninfo)
         lbest = _loss(res_array, constraints, weights, hyper)
         l1 = lbest
         resbest = res.copy()
-        # ord = maxclique_data.sample(range(1, n + 1), n)
         t = params['t']
         for it in range(params['Niter_h']):
             print(it)
             ord = random.sample(range(1, n + 1), n)
             for i in ord:
-                # temp = copy.deepcopy(res)
                 temp = copy.deepcopy(res_array)
-                # temp = pr.copy()
                 temp[i-1,:]=[0 for _ in range(params['n_partitions'])]
                 j = random.sample(range(L), 1)[0]
-                # if res[i][j] == 0:
-                #     temp[i][j] = 1
-                # else:
-                #     temp[i][j] = 0
-                # if res_array[i - 1, j] == 0:
                 temp[i - 1, j] = 1
-                # else:
-                #     temp[i - 1, j] = 0
                 lt = _loss(temp, constraints, weights, hyper)
-                # l1 = _loss(res, lenc, leninfo)
                 if lt < l1 or np.exp(- (lt - l1) / t) > np.random.uniform(0, 1):
-                    # res = copy.deepcopy(temp)
-                    # res=temp.copy()
                     res_array[i-1,:] = [0 for _ in range(params['n_partitions'])]
                     res_array[i - 1, j] = 1
-                    # if res_array[i - 1, j] == 0:
-                    #     res_array[i - 1, j] = 1
-                    # else:
-                    #     res_array[i - 1, j] = 0
                     l1 = lt
-                    # if l1 == 0:
-                    #     break
-                    # if l1<=lbest:
-                    #     lbest=l1
-                    #     resbest=res.copy()
-
-                # if sum(res_array[i-1,:])==0 or sum(res_array[i-1,:])>1:
-                #     res_array[i - 1, :]=0
-                #     arg1=maxclique_data.randint(0, L-1)
-                #     res_array[i - 1, :] = 1
-            # if l1 == 0:
-            #     break
             t = t * 0.95
-        # score = _loss(res, lenc, leninfo)
         lbest = l1
         score = lbest
         print(score)
         if score <= best_score:
-            # best_res =resbest.copy()
             best_res = copy.deepcopy(res_array)
             best_score = score
     return best_res

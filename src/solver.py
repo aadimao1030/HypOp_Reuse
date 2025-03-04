@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from src.timer import Timer
 import timeit
-from src.trainer import  centralized_train, GD_train, centralized_train_for, centralized_train_vec, centralized_train_att, centralized_train_bipartite, centralized_train_cliquegraph, centralized_train_coarsen, centralized_train_multi_gpu
+from src.trainer import  centralized_train, GD_train, centralized_train_for, centralized_train_vec, centralized_train_att, centralized_train_bipartite, centralized_train_multi_gpu
 from src.loss import loss_maxcut_numpy_boost, loss_sat_numpy_boost, loss_maxind_numpy_boost, loss_maxind_QUBO, loss_task_numpy, loss_task_numpy_vec, loss_mincut_numpy_boost, loss_watermark, loss_partition_numpy, loss_partition_numpy_boost
 import matplotlib.pyplot as plt
 # import dgl
@@ -101,45 +101,31 @@ def centralized_solver(constraints, header, params, file_name):
     else:
         edges = [[abs(x) - 1 for x in edge[:-1]] for edge in constraints_sparse]
 
-    ###### construct the G matrix, which is the HyperGNN or GNN aggregation matrix ####
+    # construct the G matrix, which is the HyperGNN or GNN aggregation matrix
 
 
-    #load = False   ###### if we have saved G before and want to load it ######
+    #load = False  if we have saved G before and want to load it
     load= False
-    #### if params['random_init']==true, it means we are not going to use the HyperGNN training results and use SA with maxclique_data initialization ######
+    # if params['random_init']==true, it means we are not going to use the HyperGNN training results and use SA with maxclique_data initialization ######
     if params['random_init']=='none' and not load:
-        ##### for GNN (graph problems) #######
+        # for GNN (graph problems)
         if params['data'] != 'hypergraph' and params['data'] != 'task' and params['data'] != 'uf' and params['data'] != 'NDC':
-            # 将2元组转化为邻接矩阵，并用度进行归一化
             G = get_normalized_G_from_con(constraints_sparse, header_sparse)
 
-        ###### for HyperGNN (hypergraph problems) ######
+        # for HyperGNN (hypergraph problems)
         else:
             H = generate_H_from_edges(edges, n)
             G = _generate_G_from_H(H)
-            # name_g="./models/G/"+params['mode']+'_'+file_name[:-4]+".npy"
-            # with open(name_g, 'wb') as ffff:
-            #     np.save(ffff,G)
             G = torch.from_numpy(G).float()
 
     elif load:
-        name_g="./models/G/"+params['mode']+'_'+file_name[:-4]+".npy" #### will have to add to the config file #####
+        name_g="./models/G/"+params['mode']+'_'+file_name[:-4]+".npy" # will have to add to the config file
         G=np.load(name_g)
         G = torch.from_numpy(G).float()
 
     else:
         G=torch.zeros([n,n])
 
-    #### here, we assign weights to constraints in case they have different importance, default=all 1 #####
-    # all_weights = [1.0 for c in (constraints)]
-    #
-    # if params['data'] != 'task':
-    #     weights = all_to_weights(all_weights, n, constraints)
-    # else:
-    #     weights = all_to_weights_task(all_weights, n, constraints)
-
-
-    #initialization
     reses = []
     reses_th = []
     probs = []
@@ -150,10 +136,9 @@ def centralized_solver(constraints, header, params, file_name):
     else:
         L = params['n_partitions']
 
-    for i in range(params['K']): ## if we want to solve the problem for K number of times ##
-        
-        # 资源分配问题
-        if params["mode"]=='task_vec': ## resource allocation problem ##
+    for i in range(params['K']): # if we want to solve the problem for K number of times
+
+        if params["mode"]=='task_vec': # resource allocation problem
             if params['mode'] == 'task_vec':
                 C_dic = {}
                 ic = 0
@@ -171,11 +156,6 @@ def centralized_solver(constraints, header, params, file_name):
             train_times.append(train_time)
             map_times.append(map_time)
 
-        # The training method of graph coarsening
-        elif params['coarsen']:
-            res, prob, train_time, map_time = centralized_train_coarsen(G, params, f, new_constraints, constraints, graph_dict,n_org, n, info,
-                                                                    file_name)
-        
         # Partition graph partitioning problem, MNP multiple knapsack problem
         elif params['mode']=='partition' or params['mode']=='MNP':
             if params['mode']=='MNP':
@@ -187,55 +167,45 @@ def centralized_solver(constraints, header, params, file_name):
             map_times.append(map_time)
 
         # bipartite data
-        elif params["data"] == 'bipartite': ##### bipartite GNN ####
+        elif params["data"] == 'bipartite':
             res, prob, train_time, map_time = centralized_train_bipartite(G, params, f, constraints_hyper, n,
                                                                           n_hyper, info_hyper, file_name)
             train_times.append(train_time)
             map_times.append(map_time)
 
-        #  cliquegraph data
-        elif params["data"] == 'cliquegraph': ##### bipartite GNN ####
-            res, prob, train_time, map_time = centralized_train_cliquegraph(G, params, f, constraints_hyper, n, info_hyper, file_name)
-            train_times.append(train_time)
-            map_times.append(map_time)
-
         # main function
-        elif not params["GD"] and not params["Att"]: ####### Main Trainer #######
-            # G is the normalized adjacency matrix.
+        elif not params["GD"] and not params["Att"]:
             res,  prob , train_time, map_time= centralized_train(G, params, f, constraints, n, info, file_name)
             train_times.append(train_time)
             map_times.append(map_time)
 
         # Training method with Hypergraph Attention Network
-        elif params["Att"]: ###### Trainer with Hypergraph Attention Network ######
+        elif params["Att"]:
             res, prob, train_time, map_time = centralized_train_att(H, params, f, constraints, n, info, file_name)
             train_times.append(train_time)
             map_times.append(map_time)
 
         # Gradient Descent
-        else: ###### Gradient Descent Solver (no HyperGNN) #####
+        else:
             res, prob, train_time, map_time = GD_train (params, f, constraints, n, info,  file_name)
             train_times.append(train_time)
             map_times.append(map_time)
 
-        ##### get the HyperGNN solution with a threshold mapping (res_th) (no fine-tuning) #####
-        if params["mode"]!='task_vec' and params["mode"]!='partition':# Default
+        # get the HyperGNN solution with a threshold mapping (res_th) (no fine-tuning)
+        if params["mode"]!='task_vec' and params["mode"]!='partition':
             res_th = {x: 0 if prob[x] < 0.5 else 1 for x in prob.keys()}
-        elif params["mode"]=='partition':# partition
+        elif params["mode"]=='partition':
             res_th={}
             for x in range(n):
                 max_index = np.argmax(prob[x,:])
-                # Create a new array of zeros with the same shape as the original vector
                 result = [0 for l in range(L)]
-                # Assign 1 to the element at the maximum index
                 result[max_index] = 1
                 res_th[x]=result
-            # res_th = {x: [0 if prob[x,i]<0.5 else 1 for i in range(L)] for x in range(n)}
-        else:# task_vec模式
+        else:
             res_th = {x: [0 if prob[x, i] < 0.5 else 1 for i in range(L)] for x in range(n)}
 
 
-        ##### calculate the score of the fine-tuned result (res) and threshold mapping result (res_th) #######
+        # calculate the score of the fine-tuned result (res) and threshold mapping result (res_th)
         if params['mode'] == 'sat':
             score, new_w = loss_sat_numpy_boost(res, constraints, [1 for i in range(len(constraints))], inc=params['boosting_mapping'])
             score_th, new_w = loss_sat_numpy_boost(res_th, constraints, [1 for i in range(len(constraints))],                                 inc=params['boosting_mapping'])
@@ -261,10 +231,8 @@ def centralized_solver(constraints, header, params, file_name):
 
             score, score1, new_w = loss_maxind_numpy_boost(res_feas, constraints, [1 for i in range(len(constraints))], inc=params['boosting_mapping'])
             score_th, score1, new_w = loss_maxind_numpy_boost(res_th_feas, constraints, [1 for i in range(len(constraints))],inc=params['boosting_mapping'])
-            #score2, score12, new_w2 = loss_maxind_numpy_boost(res2, constraints, [1 for i in range(len(constraints))],inc=params['boosting_mapping'])
-            #scores2.append(score2)
 
-        elif params['mode'] == 'QUBO': #### faster maxind (MIS) problem ####
+        elif params['mode'] == 'QUBO': # faster maxind (MIS) problem
             if params["coarsen"]:
                 res_feas = Maxind_postprocessing(res, constraints, n_org)
                 res_th_feas = Maxind_postprocessing(res_th, constraints, n_org)
@@ -273,25 +241,13 @@ def centralized_solver(constraints, header, params, file_name):
                 res_th_feas = Maxind_postprocessing(res_th, constraints, n)
 
             score = loss_maxind_QUBO(torch.Tensor(list(res_feas.values())), q_torch)
-            # score_old, score1, _ = loss_maxind_numpy_boost(res, constraints, [1 for i in range(len(constraints))],
-            #                                                inc=params['boosting_mapping'])
             score_th = loss_maxind_QUBO(torch.Tensor(list(res_th_feas.values())), q_torch)
 
-            #score2 = loss_maxind_QUBO(torch.Tensor(list(res2.values())), q_torch)
-            #scores2.append(score2)
-
-        elif params['mode'] == 'task': ### I think this doesn't work and for resource allocation, solve task_vec #####
-            #res_feas = Task_postprocessing(res, constraints, n)
-            #res_th_feas = Maxind_postprocessing(res_th, constraints, n)
+        elif params['mode'] == 'task':
             score = loss_task_numpy(res,constraints, [1 for i in range(len(constraints))] , penalty=0, hyper=False)
-            # score_old, score1, _ = loss_maxind_numpy_boost(res, constraints, [1 for i in range(len(constraints))],
-            #                                                inc=params['boosting_mapping'])
             score_th = loss_task_numpy(res_th,constraints , [1 for i in range(len(constraints))], penalty=0, hyper=False)
 
         elif params['mode'] == 'task_vec':
-            # res_m=np.zeros([n,len(constraints)])
-            # for i in range(n):
-            #     res_m[i,:]=res[i+1]
             leninfon = torch.Tensor.numpy(leninfo)
             lencn = torch.Tensor.numpy(lenc)
             score = loss_task_numpy_vec(res, lencn, leninfon)
@@ -313,7 +269,7 @@ def centralized_solver(constraints, header, params, file_name):
             score = [score_im, score_cut]
             score_th = [score_th_im, score_th_cut]
 
-        ##### collect the results for each k #####
+        # collect the results for each k
         probs.append(prob)
 
         reses.append(score)
@@ -321,7 +277,7 @@ def centralized_solver(constraints, header, params, file_name):
 
     return reses, reses_th, res,res_th, probs, timeit.default_timer() - temp_time, train_times, map_times
 
-#### solver for multi-gpu (distributed) training ####
+# solver for multi-gpu (distributed) training
 def centralized_solver_for(constraints, header, params, file_name, cur_nodes, inner_constraint, outer_constraint, device):
     temp_time = timeit.default_timer()
     edges = [[abs(x) - 1 for x in edge] for edge in constraints]
@@ -413,7 +369,7 @@ def centralized_solver_for(constraints, header, params, file_name, cur_nodes, in
         return None, None, None, None, None, None, None
 
 
-#### multi_gpu solver ####
+# multi_gpu solver
 def centralized_solver_multi_gpu(constraints, header, params, file_name, device):
     temp_time = timeit.default_timer()
     edges = [[abs(x) - 1 for x in edge] for edge in constraints]
@@ -437,13 +393,10 @@ def centralized_solver_multi_gpu(constraints, header, params, file_name, device)
     for i in range(params['K']):
         #print(weights)
         scores = []
-        scores2 = []
         scores_th = []
         scores1 = []
-        temp_weights = []
         for j in range(params['num_samples']):
-            #import pdb; pdb.set_trace()
-            #res, res2, prob = centralized_train(Xs[j], Gn, params, f, constraints, n, info, weights[i])
+
             res,  prob , train_time, map_time= centralized_train_multi_gpu(params, f, constraints, n, info, weights[i], file_name, device)
           
             if torch.distributed.get_rank() == 0:
@@ -464,19 +417,11 @@ def centralized_solver_multi_gpu(constraints, header, params, file_name, device)
                     scores.append(score)
                     scores1.append(score1)
                     scores_th.append(score_th)
-                elif params['mode'] == 'QUBO':
-                    res_feas = Maxind_postprocessing(res, constraints, n)
-                    res_th_feas = Maxind_postprocessing(res_th, constraints, n)
-                    score = loss_maxind_QUBO(torch.Tensor(list(res_feas.values())), q_torch)
-                    score_th = loss_maxind_QUBO(torch.Tensor(list(res_th_feas.values())), q_torch)
-                    scores.append(score)
-                    scores_th.append(score_th)
                    
             if torch.distributed.get_rank() == 0:
                 probs.append(prob)
         if torch.distributed.get_rank() == 0:
             reses.append(scores)
-            #reses2.append(scores2)
             reses_th.append(scores_th)
     if torch.distributed.get_rank() == 0:
         return reses, reses2, reses_th, probs, timeit.default_timer() - temp_time, train_time, map_time
@@ -488,20 +433,16 @@ def centralized_solver_multi_gpu(constraints, header, params, file_name, device)
 def QUBO_solver(params):
     logging.basicConfig(filename=params['logging_path'], filemode='w', level=logging.INFO)
     log = logging.getLogger('main')
-    # fix seed to ensure consistent results
     seed_value = 1
-    random.seed(seed_value)  # seed python RNG
-    np.random.seed(seed_value)  # seed global NumPy RNG
-    torch.manual_seed(seed_value)  # seed torch RNG
+    random.seed(seed_value)
+    np.random.seed(seed_value)
+    torch.manual_seed(seed_value)
 
     # Set GPU/CPU
     TORCH_DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     TORCH_DTYPE = torch.float32
     print(f'Will use device: {TORCH_DEVICE}, torch dtype: {TORCH_DTYPE}')
 
-
-    # MacOS can have issues with MKL. For more details, see
-    # https://stackoverflow.com/questions/53014306/error-15-initializing-libiomp5-dylib-but-found-libiomp5-dylib-already-initial
     os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
     def gen_q_dict_mis(nx_G, penalty=2):
@@ -592,28 +533,13 @@ def QUBO_solver(params):
     graph_dgl = graph_dgl.to(TORCH_DEVICE)
     q_torch = qubo_dict_to_torch(nx_graph, gen_q_dict_mis(nx_graph), torch_dtype=TORCH_DTYPE, torch_device=TORCH_DEVICE)
 
-    #folder_path= "./data/maxind_data/random_regular/reg_graph_100_single/"
     folder_path =params["folder_path"]
     for file in os.listdir(folder_path):
-    #     path = folder_path + file_name
-    #if True:
+    # path = folder_path + file_name
         if file.startswith('G'):
             path=folder_path+file
             constraints, header = read_stanford(path)
-
-
             edges = [[abs(x) - 1 for x in edge] for edge in constraints]
-
-
-            # q_torch_1 = gen_q_mis(constraints, n, 2, torch_dtype=None, torch_device=None)
-
-            # f = int(np.sqrt(n))
-            # H = generate_H_from_edges(edges, n)
-            # G = _generate_G_from_H(H)
-
-            # nx_graph2 = dgl.graph(edges)
-            # graph_dgl2 = dgl.from_networkx(nx_graph=nx_graph2)
-            # graph_dgl2 = graph_dgl2.to(TORCH_DEVICE)
             nx_graph2 = nx.Graph()
             nx_graph2.add_edges_from(edges)
             nodes_l=list(nx_graph2.nodes)
@@ -626,7 +552,6 @@ def QUBO_solver(params):
             graph_dgl2 = graph_dgl2.to(TORCH_DEVICE)
 
             # Construct Q matrix for graph
-
             q_torch2 = qubo_dict_to_torch(nx_graph2, gen_q_dict_mis(nx_graph2), torch_dtype=TORCH_DTYPE, torch_device=TORCH_DEVICE)
 
             # Establish pytorch GNN + optimizer

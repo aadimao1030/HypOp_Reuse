@@ -10,20 +10,20 @@ if __name__ == '__main__':
 
    if test_mode == "infer":
       if dataset == "stanford":
-         with open('configs/infer_configs/maxcut_stanford_for.json') as f:
+         with open('configs/infer_configs/maxcut_stanford_for_dist.json') as f:
             params = json.load(f)
       elif dataset == "arxiv":
-         with open('configs/infer_configs/maxcut_arxiv_for.json') as f:
+         with open('configs/infer_configs/maxcut_arxiv_for_dist.json') as f:
             params = json.load(f)
       print("params", params)
       exp_centralized(params)
 
    elif test_mode == "dist":
       if dataset == "stanford":
-         with open('configs/dist_configs/maxcut_stanford_for.json') as f:
+         with open('configs/dist_configs/maxcut_stanford_for_dist.json') as f:
             params = json.load(f)
       elif dataset == "arxiv":
-         with open('configs/dist_configs/maxcut_arxiv_for.json') as f:
+         with open('configs/dist_configs/maxcut_arxiv_for_dist.json') as f:
             params = json.load(f)
       
       params["logging_path"] = params["logging_path"].split(".log")[0] +str(params["multi_gpu"]) + "_" + params["data"] + "_test.log"
@@ -34,10 +34,10 @@ if __name__ == '__main__':
 
    elif test_mode == "multi_gpu":
       if dataset == "stanford":
-         with open('configs/dist_configs/maxcut_stanford_for.json') as f:
+         with open('configs/dist_configs/maxcut_stanford_for_dist.json') as f:
             params = json.load(f)
       elif dataset == "arxiv":
-         with open('configs/dist_configs/maxcut_arxiv_for.json') as f:
+         with open('configs/dist_configs/maxcut_arxiv_for_dist.json') as f:
             params = json.load(f)
       params["logging_path"] = params["logging_path"].split(".log")[0] +str(params["multi_gpu"]) + "_" + params["data"] + "_test.log"
       

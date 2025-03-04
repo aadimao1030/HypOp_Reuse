@@ -42,5 +42,7 @@
 
     "multi_gpu": 0,
     "num_gpus": 1,
-    "test_multi_gpu": 0
+    "test_multi_gpu": 0,
+    "partition_strategy": "original",
+    "fine_tuning": "SA"
 }

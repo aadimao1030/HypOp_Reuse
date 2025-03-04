@@ -48,5 +48,18 @@
     "sparcify_p":0.8,
     "n_partitions":4,
     "Att": false,
-    "load_best_out": false
+    "load_best_out": false,
+    "partition_strategy": "original",
+    "fine_tuning": "SA",
+
+    "N_particles":1800,
+
+    "population_size": 100,
+    "n_parents": 50,
+    "crossover_rate": 0.7,
+    "mutation_rate": 0.01,
+    "N_generations": 20,
+
+    "N_ants":100,
+    "evaporation_rate":0.2
 }
